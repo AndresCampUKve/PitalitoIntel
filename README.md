@@ -17,11 +17,6 @@ El proyecto está organizado de forma profesional para separar la lógica de dat
 
 ## 🚀 Inicio Rápido
 
-### Requisitos
-- Python 3.10+
-- Node.js 18+
-- Compilador G++ (para el motor C++)
-
 ### Instalación
 1. Instala las dependencias del backend:
    ```bash
