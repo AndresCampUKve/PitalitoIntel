@@ -1,0 +1,18 @@
+services:
+  scraper:
+    build:
+      context: .
+      dockerfile: Dockerfile.scraper
+    restart: always
+    environment:
+      - SB_URL=https://plofejplfbckrbqmjuid.supabase.co
+      - SB_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsb2ZlanBsZmJja3JicW1qdWlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwMjk4MzcsImV4cCI6MjA4OTYwNTgzN30.A8pFDM3BGc4s6lH58ccQtb0Xo0Oq8pk-T-gcs-qW-UE
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_SB_URL=https://plofejplfbckrbqmjuid.supabase.co
+      - VITE_SB_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsb2ZlanBsZmJja3JicW1qdWlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwMjk4MzcsImV4cCI6MjA4OTYwNTgzN30.A8pFDM3BGc4s6lH58ccQtb0Xo0Oq8pk-T-gcs-qW-UE

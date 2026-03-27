@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Pitalito Bloomberg Studio</title>
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@600;700;800&family=DM+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+/* TEMA OSCURO (Por defecto) */
+:root {
+  --bg: #050608;
+  --surface: #0b0e14;
+  --surface2: #151821;
+  --text: #ffffff;
+  --muted: #8b92a5;
+  --accent: #ffffff;
+  --danger: #ff4d4d;
+  --success: #00d084;
+  --warn: #ffb020;
+  --purple: #8b5cf6;
+  --border: rgba(255, 255, 255, 0.08);
+  --shadow: 0 10px 30px rgba(0,0,0,0.5);
+  --chart-grid: rgba(255,255,255,0.05);
+  --chart-text: #6b7280;
+  --bg-gradient: radial-gradient(circle at center, #0b0e14 0%, #050608 100%);
+}
+
+[data-state="bonanza"] {
+  --bg-gradient: radial-gradient(circle at center, #002b1b 0%, #050608 100%);
+  --success: #00ffa3;
+}
+
+[data-state="risk"] {
+  --bg-gradient: radial-gradient(circle at center, #2b0000 0%, #050608 100%);
+  --danger: #ff1a1a;
+}
+
+/* TEMA CLARO */
+[data-theme="light"] {
+  --bg: #f8f9fa;
+  --surface: #ffffff;
+  --surface2: #f1f3f5;
+  --text: #111827;
+  --muted: #6b7280;
+  --accent: #111827;
+  --danger: #dc2626;
+  --success: #059669;
+  --warn: #d97706;
+  --purple: #7c3aed;
+  --border: rgba(0, 0, 0, 0.1);
+  --shadow: 0 10px 30px rgba(0,0,0,0.05);
+  --chart-grid: rgba(0,0,0,0.05);
+  --chart-text: #9ca3af;
+}
+
+html,body { background:var(--bg-gradient); color:var(--text); font-family:'Inter',sans-serif; min-height:100vh; overflow-x:hidden; transition: all 1s ease; }
+
+/* CONTROLES STUDIO */
+.studio-bar { background:var(--surface2); padding:10px 20px; display:flex; gap:10px; align-items:center; border-bottom:1px solid var(--border); font-size:12px; font-family:'DM Mono',monospace; justify-content:space-between; }
+.sb-group { display:flex; gap:8px; }
+.btn-st { background:var(--purple); color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:700; font-family:'Inter',sans-serif; transition:0.2s; }
+.btn-st:hover { filter:brightness(1.2); }
+.btn-sc { background:transparent; color:var(--text); border:1px solid var(--border); padding:6px 12px; border-radius:6px; cursor:pointer; }
+.sel-st { background:var(--bg); color:var(--text); border:1px solid var(--border); padding:5px 10px; border-radius:6px; outline:none; font-family:'Inter',sans-serif; }
+
+/* TICKER BLOOMBERG STYLE */
+.ticker { background:var(--surface); border-bottom:1px solid var(--border); height:34px; display:flex; align-items:center; overflow:hidden; }
+.tick-lbl { background:var(--danger); color:#fff; font-size:11px; font-weight:800; padding:0 14px; height:100%; display:flex; align-items:center; letter-spacing:1px; flex-shrink:0; font-family:'Outfit',sans-serif; text-transform:uppercase; z-index:2; position:relative; box-shadow: 2px 0 10px rgba(0,0,0,0.2); }
+.tick-inner { overflow:hidden; flex:1; position:relative; background:var(--bg); height:100%; display:flex; align-items:center; }
+.tick-track { display:flex; animation:ticker 15s linear infinite; white-space:nowrap; }
+.tick-item { font-size:12px; font-family:'DM Mono',monospace; padding:0 20px; color:var(--muted); font-weight:500; display:flex; align-items:center; gap:6px; }
+.tick-item span { font-weight:700; }
+.tick-item .up { color:var(--success); } 
+.tick-item .dn { color:var(--danger); }
+.tick-item .fl { color:var(--text); }
+@keyframes ticker { 0% { transform:translateX(0) } 100% { transform:translateX(-50%) } }
+
+/* HEADER */
+.hdr { padding:16px 20px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); background:linear-gradient(180deg, var(--surface) 0%, transparent 100%); }
+.hdr-brand { font-size:22px; font-weight:800; font-family:'Outfit',sans-serif; letter-spacing:-0.5px; display:flex; align-items:center; gap:8px;}
+.live-dot { width:8px; height:8px; border-radius:50%; background:var(--danger); animation:blink 1.5s infinite; }
+.hdr-sub { font-size:10px; color:var(--muted); font-family:'DM Mono',monospace; margin-top:2px; letter-spacing:1px; text-transform:uppercase; }
+.hdr-right { text-align:right; }
+.hdr-date { font-size:12px; color:var(--text); font-weight:700; font-family:'DM Mono',monospace; }
+.hdr-time { font-size:11px; color:var(--muted); font-family:'DM Mono',monospace; margin-top:2px; }
+@keyframes blink { 0%,100% { opacity:1 } 50% { opacity:0.3 } }
+
+/* ACTIVE CHART AREA */
+.chart-area { padding:20px; position:relative; height:280px; }
+.chart-overlay { position:absolute; top:20px; left:20px; z-index:10; pointer-events:none; }
+.c-val { font-size:48px; font-weight:800; font-family:'Outfit',sans-serif; line-height:1; color:var(--success); transition:all 0.3s; }
+.c-lbl { font-size:12px; font-family:'DM Mono',monospace; color:var(--success); margin-top:5px; text-transform:uppercase; letter-spacing:1px; background:rgba(0,208,132,0.1); padding:4px 8px; border-radius:4px; display:inline-block; border:1px solid rgba(0,208,132,0.3); font-weight:600;}
+.chart-container { height:100%; width:100%; position:relative; z-index:1; }
+
+/* OPORTUNIDAD PANEL */
+.oport-panel { margin:0 20px 20px; padding:12px 16px; background:var(--surface2); border-left:4px solid var(--success); border-radius:8px; box-shadow:var(--shadow); transition:0.3s; }
+.op-title { font-size:11px; font-family:'DM Mono',monospace; text-transform:uppercase; margin-bottom:4px; color:var(--muted); font-weight:700; }
+.op-main { font-size:14px; font-weight:700; color:var(--text); }
+.op-desc { font-size:12px; color:var(--muted); margin-top:4px; }
+
+/* DATA GRID */
+.grid-data { display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:0 20px 20px; }
+.gd-card { background:linear-gradient(145deg, var(--surface) 0%, transparent 100%); border:1px solid var(--border); border-radius:12px; padding:16px; backdrop-filter:blur(5px); display:flex; flex-direction:column; justify-content:center; box-shadow:var(--shadow); transition:0.2s; }
+.gd-lbl { font-size:10px; font-family:'DM Mono',monospace; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+.gd-val { font-size:24px; font-weight:800; font-family:'Outfit',sans-serif; }
+
+/* TELEPROMPTER */
+.prompter-wrap { margin:0 20px 20px; background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; border-left:3px solid var(--purple); box-shadow:var(--shadow); }
+.p-top { padding:10px 14px; background:var(--surface2); border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+.p-lbl { font-size:10px; font-family:'DM Mono',monospace; color:var(--purple); font-weight:700; letter-spacing:1.5px; text-transform:uppercase; }
+.copy-btn { background:var(--purple); color:#fff; border:none; padding:5px 12px; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer; font-family:'Inter',sans-serif; transition:all 0.2s; }
+.p-txt { padding:20px; font-size:18px; line-height:1.6; color:var(--text); font-family:'Inter',sans-serif; font-weight:600; transition:0.3s; }
+.prompter-wrap.recording { border:3px solid var(--danger); animation:rec-pulse 1s infinite alternate; }
+@keyframes rec-pulse { from { box-shadow:0 0 10px rgba(255,77,77,0.2) } to { box-shadow:0 0 30px rgba(255,77,77,0.6) } }
+.btn-speech { background:transparent; color:var(--purple); border:1px solid var(--purple); padding:5px 12px; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer; transition:0.2s; }
+.btn-speech:hover { background:rgba(124,58,237,0.1); }
+
+/* SKRILLS / SKILLS STYLE */
+.skrills-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:0 20px 20px; }
+.sk-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px; }
+.sk-label { font-size:9px; font-family:'DM Mono',monospace; color:var(--muted); text-transform:uppercase; margin-bottom:6px; display:flex; justify-content:space-between; }
+.sk-bar-bg { background:var(--surface2); height:4px; border-radius:2px; overflow:hidden; }
+.sk-bar-fill { height:100%; background:var(--purple); border-radius:2px; transition:width 1s ease-out; }
+.sk-val { color:var(--text); font-weight:700; }
+
+/* AUDIO VISUALIZER */
+.v-wrap { display:none; align-items:center; gap:3px; height:20px; margin-left:10px; }
+.v-bar { width:3px; height:100%; background:var(--purple); animation:v-anim 0.5s ease-in-out infinite alternate; border-radius:1px; }
+.v-bar:nth-child(2) { animation-delay:0.1s; height:60%; }
+.v-bar:nth-child(3) { animation-delay:0.2s; height:80%; }
+.v-bar:nth-child(4) { animation-delay:0.3s; height:40%; }
+@keyframes v-anim { from { transform:scaleY(0.3) } to { transform:scaleY(1.2) } }
+
+.voice-cfg { background:var(--surface); padding:8px 14px; border-bottom:1px solid var(--border); display:flex; gap:15px; align-items:center; font-size:10px; font-family:'DM Mono',monospace; color:var(--muted); }
+.voice-cfg input { accent-color:var(--purple); height:12px; cursor:pointer; }
+</style>
+</head>
+<body data-theme="dark">
+
+<div class="studio-bar">
+  <div class="sb-group">
+    <button class="btn-sc" onclick="toggleTheme()" id="btn-theme">☀️ Claro</button>
+    <button class="btn-sc" onclick="generateThumbnail()">🖼️ Miniatura</button>
+  </div>
+  <div class="sb-group">
+    <select class="sel-st" id="time-range">
+      <option value="7">Últimos 7 Días</option>
+      <option value="15" selected>Últimos 15 Días</option>
+      <option value="30">Último Mes</option>
+    </select>
+    <select class="sel-st" id="voice-select" style="max-width:150px;">
+      <option value="">Cargando voces...</option>
+    </select>
+    <button class="btn-st" onclick="startPlayback()">▶ REPRODUCIR (Grabar)</button>
+  </div>
+</div>
+
+<div class="voice-cfg">
+  <span>⚡ VELOCIDAD: <input type="range" id="v-rate" min="0.5" max="2" step="0.1" value="1.1"></span>
+  <span>🎼 TONO: <input type="range" id="v-pitch" min="0.5" max="2" step="0.1" value="0.9"></span>
+  <div class="v-wrap" id="v-anim-box">
+    <div class="v-bar"></div><div class="v-bar"></div><div class="v-bar"></div><div class="v-bar"></div>
+    <span style="font-size:8px; margin-left:5px; color:var(--purple)">TRANSMITIENDO...</span>
+  </div>
+</div>
+
+<div class="ticker">
+  <div class="tick-lbl">EN VIVO</div>
+  <div class="tick-inner">
+    <div class="tick-track" id="tick-track">
+      <!-- Injected by JS -->
+    </div>
+  </div>
+</div>
+
+<div class="hdr">
+  <div class="hdr-left">
+    <div class="hdr-brand"><span class="live-dot"></span>Bloomberg Línea</div>
+    <div class="hdr-sub">Pitalito · Huila · Analytics Pro</div>
+  </div>
+  <div class="hdr-right">
+    <div class="hdr-date" id="hdr-date">—</div>
+    <div class="hdr-time" id="hdr-time">—</div>
+  </div>
+</div>
+
+<!-- LÍNEA GRÀFICA ANIMADA -->
+<div class="chart-area">
+  <div class="chart-overlay">
+    <div class="c-val" id="chart-main-val">$—</div>
+    <div class="c-lbl" id="chart-main-lbl">INDICADOR</div>
+  </div>
+  <div class="chart-container">
+    <canvas id="liveChart"></canvas>
+  </div>
+</div>
+
+<!-- OPORTUNIDAD EN VIVO -->
+<div class="oport-panel" id="oport-panel" style="display:none;">
+  <div class="op-title" id="op-status">STATUS</div>
+  <div class="op-main" id="op-main">Buscando oportunidades en el mercado...</div>
+  <div class="op-desc" id="op-desc">—</div>
+</div>
+
+<!-- DATA GRID -->
+<div class="grid-data">
+  <div class="gd-card">
+    <div class="gd-lbl">Café Carga</div>
+    <div class="gd-val" id="gd-cafe">—</div>
+  </div>
+  <div class="gd-card">
+    <div class="gd-lbl">Tasa Cambio TRM</div>
+    <div class="gd-val" id="gd-trm">—</div>
+  </div>
+  <div class="gd-card">
+    <div class="gd-lbl">Score Riesgo</div>
+    <div class="gd-val" id="gd-score">—</div>
+  </div>
+  <div class="gd-card">
+    <div class="gd-lbl">BanRep Tasa</div>
+    <div class="gd-val" id="gd-br" style="color:var(--purple)">—</div>
+  </div>
+</div>
+
+<!-- SKRILLS PERFORMANCE -->
+<div class="skrills-grid">
+  <div class="sk-card">
+    <div class="sk-label">LIQUIDEZ <span class="sk-val" id="sk-liq-val">0%</span></div>
+    <div class="sk-bar-bg"><div class="sk-bar-fill" id="sk-liq-bar" style="width:0%"></div></div>
+  </div>
+  <div class="sk-card">
+    <div class="sk-label">VOLATILIDAD <span class="sk-val" id="sk-vol-val">0%</span></div>
+    <div class="sk-bar-bg"><div class="sk-bar-fill" id="sk-vol-bar" style="width:0%;background:var(--warn)"></div></div>
+  </div>
+  <div class="sk-card">
+    <div class="sk-label">IMPULSO <span class="sk-val" id="sk-imp-val">0%</span></div>
+    <div class="sk-bar-bg"><div class="sk-bar-fill" id="sk-imp-bar" style="width:0%;background:var(--success)"></div></div>
+  </div>
+  <div class="sk-card">
+    <div class="sk-label">RIESGO <span class="sk-val" id="sk-rig-val">0%</span></div>
+    <div class="sk-bar-bg"><div class="sk-bar-fill" id="sk-rig-bar" style="width:0%;background:var(--danger)"></div></div>
+  </div>
+</div>
+
+<!-- TELEPROMPTER GUION -->
+<div class="prompter-wrap">
+  <div class="p-top">
+    <div class="p-lbl">Script de Video (Will Lab Style) 🎙️</div>
+    <div class="sb-group">
+      <button class="btn-st" onclick="generarScriptIA()" id="btn-ia">✨ Inteligencia Viral</button>
+      <button class="btn-speech" onclick="speakText()" id="btn-spk">🗣️ Leer Voz IA</button>
+      <button class="copy-btn" onclick="copyG()" id="cp-btn">📋 COPIAR</button>
+    </div>
+  </div>
+  <div class="p-txt" id="guion">Haz clic en REPRODUCIR para ver los datos, o usa ✨ INTELIGENCIA VIRAL para un guion agresivo.</div>
+</div>
+
+<!-- GANCHOS VIRALES -->
+<div class="oport-panel" id="hooks-panel" style="display:none; border-left-color: var(--purple); background: rgba(139, 92, 246, 0.05);">
+  <div class="op-title" id="ia-sentiment" style="color:var(--purple); display: flex; justify-content: space-between;">
+    <span>🪝 Inteligencia Multi-Canal</span>
+    <span id="sentiment-tag" style="background:var(--bg); padding: 2px 8px; border-radius: 4px; font-size: 9px;">SENTIMIENTO: ---</span>
+  </div>
+  
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px;">
+    <div>
+      <div class="op-title" style="font-size: 9px;">🧵 Hilo X (Twitter)</div>
+      <div id="x-thread" style="font-size:11px; color:var(--muted); background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; max-height: 100px; overflow-y: auto;"></div>
+    </div>
+    <div>
+      <div class="op-title" style="font-size: 9px;">💼 LinkedIn Post</div>
+      <div id="ln-post" style="font-size:11px; color:var(--muted); background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; max-height: 100px; overflow-y: auto;"></div>
+    </div>
+  </div>
+
+  <div class="op-title" style="font-size: 9px; margin-top: 10px;">🎥 Ganchos TikTok</div>
+  <div id="hooks-list" style="font-size:13px; line-height:1.6; margin-top:5px;"></div>
+  
+  <div style="display: flex; gap: 10px; margin-top: 15px;">
+    <button class="copy-btn" style="flex:1" onclick="copyCaption()">📱 Copiar Caption</button>
+    <button class="copy-btn" style="flex:1; background: #000; border: 1px solid #333;" onclick="copyX()">🧵 Copiar X</button>
+  </div>
+</div>
+
+<canvas id="thumbCanvas" width="1080" height="1080" style="display:none;"></canvas>
+
+<script>
+const SB='https://plofejplfbckrbqmjuid.supabase.co', SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsb2ZlanBsZmJja3JicW1qdWlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwMjk4MzcsImV4cCI6MjA4OTYwNTgzN30.A8pFDM3BGc4s6lH58ccQtb0Xo0Oq8pk-T-gcs-qW-UE';
+const GKEY = 'AIzaSyD8js-WocnOe5jwjo6A4prAmVjKhBE-uHg';
+const H={'apikey':SK,'Authorization':'Bearer '+SK};
+const fmt=n=>new Intl.NumberFormat('es-CO').format(Math.round(n));
+
+let fullData = [];
+let liveChart;
+let isDark = true;
+let playInterval = null;
+let currentUIVoiceTxt = '';
+
+// ======= THEME TOGGLE =======
+function toggleTheme(){
+  isDark = !isDark;
+  document.body.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  document.getElementById('btn-theme').textContent = isDark ? '☀️ Claro' : '🌙 Oscuro';
+  // Modificar variables en la gráfica
+  const gColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+  const tColor = isDark ? '#6b7280' : '#9ca3af';
+  if(liveChart){
+    liveChart.options.scales.x.grid.color = gColor;
+    liveChart.options.scales.y.grid.color = gColor;
+    liveChart.options.scales.x.ticks.color = tColor;
+    liveChart.options.scales.y.ticks.color = tColor;
+    liveChart.update();
+  }
+}
+
+// ======= PWA =======
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+
+// ======= VOICES =======
+let voices = [];
+function updateVoices() {
+  voices = window.speechSynthesis.getVoices();
+  const sel = document.getElementById('voice-select');
+  const saved = localStorage.getItem('studio_voice');
+  
+  // Filter for Spanish voices or all if none
+  const esVoices = voices.filter(v => v.lang.includes('es'));
+  const list = esVoices.length ? esVoices : voices;
+  
+  sel.innerHTML = list.map(v => `<option value="${v.name}" ${v.name===saved?'selected':''}>${v.name}</option>`).join('');
+}
+window.speechSynthesis.onvoiceschanged = updateVoices;
+setTimeout(updateVoices, 500);
+
+document.getElementById('voice-select').onchange = (e) => {
+  localStorage.setItem('studio_voice', e.target.value);
+};
+
+// ======= CLOCK =======
+function tick(){
+  const n=new Date();
+  document.getElementById('hdr-date').textContent=n.toLocaleDateString('es-CO',{weekday:'short',day:'numeric',month:'short'}).toUpperCase() + ' (HOY)';
+  document.getElementById('hdr-time').textContent=n.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+setInterval(tick,1000); tick();
+
+// ======= FETCH DATA =======
+async function cargar(){
+  try{
+    const r=await fetch(SB+'/rest/v1/clima_historico?select=*&order=fecha.asc&limit=60',{headers:H});
+    const data=await r.json();
+    if(!data||!data.length){demo();return;}
+    fullData = data;
+    mockUI(fullData[fullData.length-1], fullData[fullData.length-2]||fullData[fullData.length-1], true);
+  }catch(e){demo();}
+}
+
+// ======= CALC MOVING AVERAGE =======
+function calcMA7(arr, index){
+  if(index < 6) return null;
+  let sum = 0;
+  for(let j=index-6; j<=index; j++){
+    sum += parseFloat(arr[j].precio_cafe);
+  }
+  return sum / 7;
+}
+
+// ======= PLAYBACK LOGIC =======
+function startPlayback(){
+  if(playInterval) clearInterval(playInterval);
+  if(!fullData.length) return;
+  
+  const days = parseInt(document.getElementById('time-range').value);
+  const startIdx = Math.max(0, fullData.length - days);
+  const slice = fullData.slice(startIdx);
+  if(!slice.length) return;
+  
+  initLiveChart();
+  
+  let i = 0;
+  pushChartPoint(slice[0], slice[0], startIdx + 0);
+  i++;
+  
+  playInterval = setInterval(() => {
+    if(i < slice.length){
+      pushChartPoint(slice[i], slice[i-1], startIdx + i);
+      i++;
+    } else {
+      clearInterval(playInterval);
+      playInterval = setInterval(() => { subtleFluctuation(slice[slice.length-1]); }, 500);
+      
+      // Update heading context at very end
+      document.getElementById('chart-main-lbl').textContent = `CAFÉ / ÚLTIMO CIERRE: ${slice[slice.length-1].fecha}`;
+    }
+  }, 1200);
+}
+
+function pushChartPoint(current, prev, actualIdx){
+  const isFinal = (actualIdx === fullData.length - 1);
+  mockUI(current, prev, isFinal);
+  
+  liveChart.data.labels.push(current.fecha.substring(5)); // Show MM-DD
+  liveChart.data.datasets[0].data.push(parseFloat(current.precio_cafe));
+  
+  // Calculate MA7
+  const ma = calcMA7(fullData, actualIdx);
+  liveChart.data.datasets[1].data.push(ma);
+
+  liveChart.update();
+}
+
+function subtleFluctuation(basePoint){
+  const baseVal = parseFloat(basePoint.precio_cafe);
+  const flu = baseVal + (Math.random() - 0.5) * 8000;
+  document.getElementById('chart-main-val').textContent = '$' + fmt(flu/1000) + 'k';
+}
+
+// ======= PROFESSIONAL CHART SETUP =======
+function initLiveChart(){
+  const ctx = document.getElementById('liveChart').getContext('2d');
+  if(liveChart) liveChart.destroy();
+  
+  let g = ctx.createLinearGradient(0, 0, 0, 240);
+  g.addColorStop(0, 'rgba(0, 208, 132, 0.4)');
+  g.addColorStop(1, 'rgba(0, 208, 132, 0.0)');
+  
+  const gColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+  const tColor = isDark ? '#8b92a5' : '#9ca3af';
+
+  liveChart = new Chart(ctx, {
+    type: 'line',
+    data: { 
+      labels: [], 
+      datasets: [
+        { 
+          label: 'Café', data: [], 
+          borderColor: '#00d084', backgroundColor: g, borderWidth: 3, 
+          pointRadius: 3, pointBackgroundColor:'#fff', fill: true, tension: 0.3 
+        },
+        {
+          label: 'MA7', data: [],
+          borderColor: '#8b5cf6', borderWidth: 2, borderDash: [5,5],
+          pointRadius: 0, fill: false, tension: 0.4
+        }
+      ] 
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      animation: { duration: 400, easing: 'linear' },
+      plugins: { legend: { display: false }, tooltip: { enabled: false } },
+      scales: {
+        x: { 
+          display: true, 
+          grid: { color: gColor, drawBorder: false },
+          ticks: { color: tColor, font: {family:'DM Mono'} }
+        },
+        y: { 
+          display: true, position: 'right',
+          grid: { color: gColor, drawBorder: false },
+          ticks: { 
+            color: tColor, font: {family:'DM Mono'},
+            callback: function(v){ return '$'+Math.round(v/1000)+'k'; }
+          }
+        }
+      }
+    }
+  });
+}
+
+// ======= UI UPDATE =======
+function mockUI(c, p, isFinal){
+  const cafe=parseFloat(c.precio_cafe), trm=parseFloat(c.trm), br=parseFloat(c.tasa_banrep), score=parseInt(c.score_riesgo), clima=c.clima;
+  const dcafe = cafe - parseFloat(p.precio_cafe);
+  const dtrm = trm - parseFloat(p.trm);
+  
+  // Tiempos
+  const cCol = dcafe>=0 ? 'var(--success)' : 'var(--danger)';
+  const tCol = dtrm>=0 ? 'var(--danger)' : 'var(--success)';
+  const sCol = score<50 ? 'var(--success)' : 'var(--danger)';
+  
+  document.getElementById('gd-cafe').innerHTML=`<span style="color:${cCol}">${dcafe>=0?'▲':'▼'}</span> $${fmt(cafe/1000)}k`;
+  document.getElementById('gd-trm').innerHTML=`<span style="color:${tCol}">${dtrm>=0?'▲':'▼'}</span> $${fmt(trm)}`;
+  document.getElementById('gd-score').innerHTML=`<span style="color:${sCol}">${score}/100</span>`;
+  document.getElementById('gd-br').textContent=br+'%';
+  
+  // Ticker
+  const tkItem = `
+    <div class="tick-item">CAFÉ CARGA <span class="${dcafe>=0?'up':'dn'}">${dcafe>=0?'▲':'▼'} $${fmt(cafe)}</span></div>
+    <div class="tick-item">TRM COLOMBIA <span class="${dtrm>=0?'dn':'up'}">${dtrm>=0?'▲':'▼'} $${fmt(trm)}</span></div>
+    <div class="tick-item">BANREP <span class="fl">■ ${br}%</span></div>
+    <div class="tick-item">RIESGO <span class="${score>50?'dn':'up'}">${score}/100</span></div>
+    <div class="tick-item" style="color:var(--text);font-family:'Outfit'">WILL LAB OFFICIAL</div>
+  `;
+  document.getElementById('tick-track').innerHTML = tkItem.repeat(4);
+  
+  // Overlay Number
+  document.getElementById('chart-main-val').textContent = '$' + fmt(cafe/1000) + 'k';
+  const tend = dcafe >= 0 ? '▲' : '▼';
+  
+  if(!isFinal){
+    document.getElementById('chart-main-lbl').textContent = `CAFÉ (${c.fecha.substring(5)}) ${tend}`;
+    document.getElementById('chart-main-lbl').style.background = dcafe >= 0 ? 'rgba(0,208,132,0.1)' : 'rgba(255,77,77,0.1)';
+    document.getElementById('chart-main-lbl').style.color = dcafe >= 0 ? 'var(--success)' : 'var(--danger)';
+  } else {
+    document.getElementById('chart-main-lbl').textContent = `CAFÉ / ÚLTIMO CIERRE: ${c.fecha}`;
+  }
+  
+  // Panel Oportunidades
+  renderOport(cafe, trm, score, clima);
+  
+  // Update Skrills
+  updateSkrills(cafe, score, dcafe);
+  
+  // Guion Viral
+  generarGuion(cafe, trm, score, dcafe, p);
+}
+
+function updateSkrills(cafe, score, dcafe){
+  const liq = Math.min(100, Math.max(10, 100 - (score * 0.8)));
+  const vol = Math.min(100, Math.max(5, Math.abs(dcafe/20000) * 100));
+  const imp = dcafe > 0 ? 85 : 15;
+  const rig = score;
+
+  const setSk = (id, val) => {
+    document.getElementById(`sk-${id}-val`).textContent = Math.round(val) + '%';
+    document.getElementById(`sk-${id}-bar`).style.width = val + '%';
+  };
+  setSk('liq', liq);
+  setSk('vol', vol);
+  setSk('imp', imp);
+  setSk('rig', rig);
+
+  // FONDOS DINÁMICOS
+  if(score < 30) document.body.dataset.state = 'bonanza';
+  else if(score > 60) document.body.dataset.state = 'risk';
+  else document.body.dataset.state = '';
+}
+
+function renderOport(cafe, trm, score, clima){
+  const pnl = document.getElementById('oport-panel');
+  pnl.style.display = 'block';
+  
+  let o = {t: 'MÉTRICA NEUTRAL', m: 'Economía en corrección', d: 'Mantén liquidez y evita créditos caros.', c: 'var(--warn)'};
+  
+  if(score < 30) {
+    o = {t: '💡 VENTANA DE INVERSIÓN', m: 'El riesgo cayó al piso', d: `Con café a $${fmt(cafe)} hay exceso de caja. Sube precios 5% o expande stock hoy.`, c: 'var(--success)'};
+  } else if(score > 60) {
+    o = {t: '⚠️ FLUJO DE CAJA COMPROMETIDO', m: 'Contracción inminente', d: `El alto riesgo (${score}) indica que no debes endeudarte. Ojo a la cartera morosa.`, c: 'var(--danger)'};
+  }
+  
+  document.getElementById('op-status').textContent = o.t;
+  document.getElementById('op-status').style.color = o.c;
+  document.getElementById('op-main').textContent = o.m;
+  document.getElementById('op-main').style.color = isDark ? '#fff' : '#000';
+  document.getElementById('op-desc').textContent = o.d;
+  pnl.style.borderLeftColor = o.c;
+}
+
+// ======= INTELIGENCIA VIRAL (GEMINI) =======
+async function generarScriptIA() {
+  const btn = document.getElementById('btn-ia');
+  const guionBox = document.getElementById('guion');
+  const hooksBox = document.getElementById('hooks-panel');
+  const hooksList = document.getElementById('hooks-list');
+
+  btn.disabled = true;
+  btn.textContent = '🧠 IA Pensando...';
+  guionBox.innerHTML = '<div style="color:var(--muted)">Generando guion con inteligencia quirúrgica...</div>';
+
+  const c_cafe = document.getElementById('gd-cafe').innerText;
+  const c_trm = document.getElementById('gd-trm').innerText;
+  const c_score = document.getElementById('gd-score').innerText;
+  const c_br = document.getElementById('gd-br').innerText;
+
+  const prompt = `Eres un estratega financiero viral para Pitalito.
+  CÓDIGO DE DATOS ACTUALES:
+  Café Carga: ${c_cafe} | TRM Dólar: ${c_trm} | Score Riesgo: ${c_score} | BanRep: ${c_br}
+
+  TU MISIÓN:
+  1. Genera un GUION de video (30 seg) Estilo "Will Lab": Agresivo, certero.
+     - Usa comas y puntos estratégicamente para pausas naturales.
+     - Incluye marcadores [PAUSA] o [ÉNFASIS] en el texto si es necesario para el narrador.
+  2. Genera 3 GANCHOS virales.
+  3. Genera un HILO de 3 tweets para X.
+  4. Genera un POST profesional para LinkedIn.
+  5. Determina el SENTIMIENTO (BULLISH o BEARISH).
+  6. Formatea la respuesta estrictamente así:
+  [SENTIMIENTO] BULLISH/BEARISH
+  [GUIÓN] Texto...
+  [GANCHOS] Hook 1 | Hook 2 | Hook 3
+  [X] Tuit 1 | Tuit 2 | Tuit 3
+  [LINKEDIN] Texto...
+  [CAPTION] Instagram Texto...`;
+
+  try {
+    const res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + GKEY, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }] })
+    });
+    const data = await res.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+    // Parsing mejorado
+    const getPart = (tag) => {
+      const regex = new RegExp(`\\[${tag}\\]([\\s\\S]*?)(\\[|$)`);
+      return (text.match(regex)?.[1] || '').trim();
+    };
+
+    const sentiment = getPart('SENTIMIENTO');
+    const scriptPart = getPart('GUIÓN');
+    const hooksPart = getPart('GANCHOS');
+    const xPart = getPart('X');
+    const lnPart = getPart('LINKEDIN');
+    const captionPart = getPart('CAPTION');
+
+    document.getElementById('sentiment-tag').textContent = `SENTIMIENTO: ${sentiment}`;
+    document.getElementById('sentiment-tag').style.color = sentiment === 'BULLISH' ? 'var(--success)' : 'var(--danger)';
+    
+    currentUIVoiceTxt = scriptPart.replace(/\n/g, ' ');
+    guionBox.innerHTML = scriptPart.replace(/\n/g, '<br>');
+    
+    document.getElementById('x-thread').innerHTML = xPart.split('|').map(t => `<p style="margin-bottom:8px;">🐦 ${t.trim()}</p>`).join('');
+    document.getElementById('ln-post').textContent = lnPart;
+    hooksList.innerHTML = hooksPart.split('|').map(h => `<div style="margin-bottom:5px;">📌 ${h.trim()}</div>`).join('');
+    
+    hooksBox.style.display = 'block';
+    hooksBox.dataset.caption = captionPart;
+    hooksBox.dataset.x = xPart.replace(/\|/g, '\n\n');
+
+  } catch (e) {
+    guionBox.textContent = 'Error conectando con la inteligencia artificial.';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '✨ Inteligencia Viral';
+  }
+}
+
+function generateThumbnail() {
+  const canvas = document.getElementById('thumbCanvas');
+  const ctx = canvas.getContext('2d');
+  const cafe = document.getElementById('gd-cafe').innerText;
+  const trm = document.getElementById('gd-trm').innerText;
+  const score = document.getElementById('gd-score').innerText;
+
+  // Background
+  const grad = ctx.createRadialGradient(540, 540, 0, 540, 540, 800);
+  grad.addColorStop(0, '#151821');
+  grad.addColorStop(1, '#050608');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 1080, 1080);
+
+  // Overlay Lines
+  ctx.strokeStyle = 'rgba(139, 92, 246, 0.2)';
+  ctx.lineWidth = 2;
+  for(let i=0; i<10; i++) {
+    ctx.beginPath(); ctx.moveTo(0, i*120); ctx.lineTo(1080, i*120); ctx.stroke();
+  }
+
+  // Text
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 80px Outfit';
+  ctx.fillText('PITALITO INTEL', 60, 150);
+  
+  ctx.fillStyle = '#8b92a5';
+  ctx.font = '40px DM Mono';
+  ctx.fillText('REPORTE ESTRATÉGICO', 60, 210);
+
+  // Main Value
+  ctx.fillStyle = '#00d084';
+  ctx.font = 'bold 220px Outfit';
+  ctx.fillText(cafe, 60, 550);
+  
+  ctx.fillStyle = '#8b92a5';
+  ctx.font = '60px DM Mono';
+  ctx.fillText('CAFÉ CARGA HOY', 60, 630);
+
+  // Small Data
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 80px Outfit';
+  ctx.fillText(trm, 60, 850);
+  ctx.font = '40px DM Mono';
+  ctx.fillText('TRM DÓLAR', 60, 910);
+
+  ctx.font = 'bold 80px Outfit';
+  ctx.fillText(score, 600, 850);
+  ctx.font = '40px DM Mono';
+  ctx.fillText('SCORE RIESGO', 600, 910);
+
+  // Branding
+  ctx.fillStyle = '#8b5cf6';
+  ctx.font = 'bold 40px Outfit';
+  ctx.fillText('WILL LAB OFFICIAL', 750, 150);
+
+  const link = document.createElement('a');
+  link.download = `miniatura-pitalito-${Date.now()}.png`;
+  link.href = canvas.toDataURL();
+  link.click();
+}
+
+function copyX() {
+  const t = document.getElementById('hooks-panel').dataset.x;
+  navigator.clipboard.writeText(t).then(() => alert('¡Hilo de X copiado! 🐦'));
+}
+
+function copyCaption() {
+  const cap = document.getElementById('hooks-panel').dataset.caption;
+  if(!cap) return;
+  navigator.clipboard.writeText(cap).then(() => {
+    alert('¡Caption copiado para redes! 📱');
+  });
+}
+
+// ======= GUION VIRAL TIKTOK (PROFESIONAL 30S) =======
+function generarGuion(cafe, trm, score, dc, prev){
+  const n = new Date();
+  const fechaStr = n.toLocaleDateString('es-CO', { day: 'numeric', month: 'long' });
+  const pCafe = prev ? Math.abs(((cafe - prev.precio_cafe) / prev.precio_cafe) * 100).toFixed(1) : "0.0";
+  const tend = dc >= 0 ? "al alza" : "a la baja";
+  const comp = dc >= 0 ? "un incremento del" : "una caída del";
+
+  // Hook profesional y autoritario (Standard Mode)
+  let hook = `Reporte Pitalito Intel. Hoy ${fechaStr}, el mercado está enviando señales claras.`;
+  let data = `La carga de café está en $${fmt(cafe)}, con tendencia ${tend}. El dólar TRM marca $${fmt(trm)}.`;
+  let skills = score < 35 ? "Ejecución: COMPRA. Liquidez en máximos." : "Ejecución: CAUTELA. Protege tus márgenes.";
+  let cta = "Si quieres el guion de IA completo, haz clic en ✨ INTELIGENCIA VIRAL.";
+  
+  currentUIVoiceTxt = `${hook} ${data} ${skills} ${cta}`;
+  
+  document.getElementById('guion').innerHTML = `
+    <div style="margin-bottom:12px;"><strong style="color:var(--purple);font-size:10px;">[ESTÁNDAR]</strong><br>${hook} ${data} ${skills}</div>
+    <div style="font-size:11px; color:var(--muted)">Usa el botón ✨ INTELIGENCIA VIRAL para una versión estratégica avanzada.</div>
+  `;
+}
+
+// ======= NARRADOR IA =======
+function speakText(){
+  if(!currentUIVoiceTxt) return;
+  if(window.speechSynthesis.speaking){
+    window.speechSynthesis.cancel();
+    document.getElementById('btn-spk').textContent = '🗣️ Leer Voz IA';
+    return;
+  }
+  document.getElementById('btn-spk').textContent = '🛑 Detener';
+  document.getElementById('v-anim-box').style.display = 'flex';
+  const pWrap = document.querySelector('.prompter-wrap');
+  pWrap.classList.add('recording');
+  
+  const u = new SpeechSynthesisUtterance(currentUIVoiceTxt.replace(/\[PAUSA\]/g, ',').replace(/\[ÉNFASIS\]/g, '!!'));
+  u.lang = 'es-CO';
+  u.pitch = parseFloat(document.getElementById('v-pitch').value);
+  u.rate = parseFloat(document.getElementById('v-rate').value); 
+  
+  const selectedName = document.getElementById('voice-select').value;
+  const v = voices.find(v => v.name === selectedName);
+  if(v) u.voice = v;
+  
+  u.onend = () => { 
+    document.getElementById('btn-spk').textContent = '🗣️ Leer Voz IA'; 
+    document.getElementById('v-anim-box').style.display = 'none';
+    pWrap.classList.remove('recording');
+  };
+  window.speechSynthesis.speak(u);
+}
+
+// ======= CLIPBOARD =======
+function copyG(){
+  navigator.clipboard.writeText(currentUIVoiceTxt).then(()=>{
+    const b=document.getElementById('cp-btn');
+    b.textContent='¡COPIADO!'; b.style.background='var(--success)';
+    setTimeout(()=>{b.textContent='📋 COPIAR'; b.style.background='var(--purple)';},2000);
+  });
+}
+
+function demo(){
+  fullData = Array.from({length:30}, (_,i) => ({
+    precio_cafe: 1800000 + (Math.sin(i*0.4)*100000) + (i*20000),
+    trm: 4200 - i*8 + Math.random()*30,
+    tasa_banrep: 10.25,
+    score_riesgo: Math.max(10, 60 - i*1.2),
+    clima: i>20 ? 'Bonanza' : (i>10 ? 'Estabilidad' : 'Tormenta'),
+    fecha: '2025-0' + (i<10?'0':'') + i + '-01'
+  }));
+  mockUI(fullData[fullData.length-1], fullData[fullData.length-2], true);
+  initLiveChart();
+}
+
+// Load voices async for Chrome
+if (speechSynthesis.onvoiceschanged !== undefined) {
+  speechSynthesis.onvoiceschanged = () => {};
+}
+
+cargar();
+</script>
+</body>
+</html>

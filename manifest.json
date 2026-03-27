@@ -1,0 +1,15 @@
+{
+  "name": "Pitalito Intel Studio",
+  "short_name": "Studio",
+  "start_url": "reporte-movil-1.html",
+  "display": "standalone",
+  "background_color": "#050608",
+  "theme_color": "#8b5cf6",
+  "icons": [
+    {
+      "src": "https://img.icons8.com/isometric/512/coffee-beans.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

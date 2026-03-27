@@ -1,0 +1,3 @@
+python-dotenv
+requests
+# supabase # Se usa urllib en los scripts, pero si planeas usar el SDK oficial, descomenta esta linea

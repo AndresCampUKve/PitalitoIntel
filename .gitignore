@@ -1,0 +1,39 @@
+# Node dependencies
+node_modules/
+package-lock.json
+
+# Build directories
+dist/
+build/
+.next/
+out/
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# Binary files
+*.exe
+*.bin
+motor
+motor.exe
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
