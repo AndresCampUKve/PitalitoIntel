@@ -2213,7 +2213,7 @@
   <script>
     const SB_URL = 'https://plofejplfbckrbqmjuid.supabase.co', SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBsb2ZlanBsZmJja3JicW1qdWlkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwMjk4MzcsImV4cCI6MjA4OTYwNTgzN30.A8pFDM3BGc4s6lH58ccQtb0Xo0Oq8pk-T-gcs-qW-UE';
     const SB_H = { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' };
-    const GKEY = 'AIzaSyD8js-WocnOe5jwjo6A4prAmVjKhBE-uHg';
+    const GKEY = 'YOUR_GOOGLE_MAPS_API_KEY';
     const LAB_U = 'bcampos', LAB_P = 'Pitalito2025$Lab';
 
     // ===== THEME =====
@@ -2513,7 +2513,7 @@
     function initMap() {
       if (mapReady) return; mapReady = true;
       const s = document.createElement('script');
-      s.src = 'https://maps.googleapis.com/maps/api/js?key=' + GKEY + '&libraries=places&callback=onMapReady&language=es';
+      s.src = "https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY&libraries=places&callback=initMap&language=es";
       s.async = true; document.head.appendChild(s);
     }
     window.onMapReady = function () {
@@ -2665,7 +2665,7 @@
       inp.value = '';
       addMsg(q, 'user');
 
-      const key = localStorage.getItem('ai_key') || 'AIzaSyD8js-WocnOe5jwjo6A4prAmVjKhBE-uHg';
+      const key = localStorage.getItem('ai_key') || 'YOUR_GEMINI_API_KEY';
 
       const btn = document.getElementById('ai-send-btn'); btn.disabled = true;
       const typing = document.getElementById('ai-typing'); typing.style.display = 'flex';
