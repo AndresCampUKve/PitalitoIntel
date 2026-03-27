@@ -1,6 +1,6 @@
 import sys
 
-with open("index.html", "r", encoding="utf-8") as f:
+with open("../index.html", "r", encoding="utf-8") as f:
     text = f.read()
 
 new_styles = """
@@ -52,7 +52,7 @@ new_styles = """
 
 text = text.replace("</style>", new_styles)
 
-with open("index.html", "w", encoding="utf-8") as f:
+with open("../index.html", "w", encoding="utf-8") as f:
     f.write(text)
 
 print("Quantix overrides injected!")

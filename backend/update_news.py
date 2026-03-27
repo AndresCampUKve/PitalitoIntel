@@ -1,6 +1,6 @@
 import sys
 
-with open("index.html", "r", encoding="utf-8") as f:
+with open("../index.html", "r", encoding="utf-8") as f:
     text = f.read()
 
 # 1. Add Sidebar Items (News + Studio Mode)
@@ -105,7 +105,7 @@ if 'if (id === "ia") bootAI();' in text:
 
 text = text.replace('// ===== SUPABASE DATA =====', js_insertion + '\n    // ===== SUPABASE DATA =====')
 
-with open("index.html", "w", encoding="utf-8") as f:
+with open("../index.html", "w", encoding="utf-8") as f:
     f.write(text)
 
 print("News integration successful!")

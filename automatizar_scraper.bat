@@ -4,12 +4,12 @@ echo   INSTALADOR QUIRÚRGICO - PITALITO INTEL SCRAPER
 echo ===================================================
 echo.
 echo Este script programará tu computadora para que ejecute 
-echo "scraper.py" todos los días a las 6:00 AM en segundo plano.
+echo "backend\scraper.py" todos los días a las 6:00 AM en segundo plano.
 echo Nunca más tendrás que actualizar los datos a mano.
 echo.
 
 :: Obteniendo la ruta absoluta de scraper.py
-set SCRAPER_PATH="%~dp0scraper.py"
+set SCRAPER_PATH="%~dp0backend\scraper.py"
 
 :: Creando un archivo vbs temporal para ejecutar python de forma invisible (sin consola negra)
 echo Set WshShell = CreateObject("WScript.Shell") > "%~dp0run_hidden.vbs"

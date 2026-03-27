@@ -1,6 +1,6 @@
 import re
 
-with open("index.html", "r", encoding="utf-8") as f:
+with open("../index.html", "r", encoding="utf-8") as f:
     text = f.read()
 
 # 1. Update font imports
@@ -153,7 +153,7 @@ text = text.replace("function setTheme(name, el) {", "function setTheme(name, el
 new_map_styles = "styles: [{ featureType: 'all', elementType: 'geometry.fill', stylers: [{ color: '#0b0e14' }] }, { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#151821' }] }, { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#1e222d' }] }, { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#8b92a5' }] }, { featureType: 'road', elementType: 'labels.text.stroke', stylers: [{ color: '#0b0e14' }] }, { featureType: 'landscape', elementType: 'geometry', stylers: [{ color: '#0b0e14' }] }, { featureType: 'poi', elementType: 'geometry', stylers: [{ color: '#151821' }] }, { featureType: 'poi', elementType: 'labels', stylers: [{ visibility: 'off' }] }, { featureType: 'administrative', elementType: 'labels.text.fill', stylers: [{ color: '#ffffff' }] }, { featureType: 'administrative', elementType: 'labels.text.stroke', stylers: [{ color: '#0b0e14' }] }]"
 text = re.sub(r"styles: \[\{ featureType: 'all'.*?\]\}\]", new_map_styles, text, flags=re.DOTALL)
 
-with open("index.html", "w", encoding="utf-8") as f:
+with open("../index.html", "w", encoding="utf-8") as f:
     f.write(text)
 
 print("UI update complete.")

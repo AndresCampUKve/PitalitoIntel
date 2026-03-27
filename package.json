@@ -3,7 +3,7 @@
   "version": "2.0.0",
   "description": "Inteligencia Financiera Regional Pitalito, Huila",
   "scripts": {
-    "scraper": "python scraper.py",
+    "scraper": "python backend/scraper.py",
     "frontend": "cd frontend && npm run dev",
     "start": "npx.cmd concurrently \"npm run scraper\" \"npm run frontend\"",
     "setup": "cd frontend && npm install"
